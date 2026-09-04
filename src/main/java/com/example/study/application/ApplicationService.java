@@ -29,7 +29,6 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final StudyService studyService;
     private final MemberService memberService;
-    private final StudyPost studyPost;
 
     /**
      * 신청.
@@ -178,7 +177,33 @@ public class ApplicationService {
      * 동작결과    EP-10 · 상태가 ACCEPTED · 정원이 차면 400 CAPACITY_EXCEEDED
      *             마지막 자리를 채우면 모집글 상태가 CLOSED
      */
-        throw new UnsupportedOperationException("TODO 43");
+
+        // 처리 가능한 신청인지 확인
+        Application application = processable(applicationId, memberId);
+        // StudyPost 불러오기
+        StudyPost studyPost = application.getStudyPost();
+        // 모집글 ID 불러오기
+        Long studyPostId = application.getStudyPost().getId();
+        // 현재 허가된 사람을 셈
+        long acceptedCount = applicationRepository.countByStudyPostIdAndStatus(studyPostId, ApplicationStatus.ACCEPTED);
+
+        // 허가된 사람이 정원보다 높거나 같으면 에러메세지 출력
+        if(acceptedCount >= studyPost.getCapacity()) {
+            throw new BusinessException(
+                    ErrorCode.CAPACITY_EXCEEDED,
+                    "정원이 찼습니다."
+            );
+        }
+
+        // 허용
+        application.accept();
+
+        // 이번 신청까지 수락하면 정원이 꽉 차는 경우 모집글도 마감
+        if (acceptedCount + 1 >= studyPost.getCapacity()) {
+            studyPost.close();
+        }
+
+        return ApplicationResponse.from(application);
     }
 
     /**
