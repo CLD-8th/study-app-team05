@@ -104,7 +104,15 @@ public class ApplicationService {
      * 반환형태    없음
      * 동작결과    EP-08 · 204 · 남의 신청 403 · 처리된 건 400 ALREADY_PROCESSED
      */
-        throw new UnsupportedOperationException("TODO 32");
+        Application application = getWdithStuyPost(applicationId);
+
+        if (!application.isAppliedBy(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        if (!application.isPending()) {
+            throw new BusinessException(ErrorCode.ALREADY_PROCESSED);
+        }
+        applicationRepository.delete(application);
     }
 
     public List<ApplicationResponse> findByStudy(Long studyPostId, Long memberId) {
