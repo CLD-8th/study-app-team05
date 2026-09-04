@@ -108,17 +108,12 @@ public class StudyService {
 
     @Transactional
     public void delete(Long id, Long memberId) {
-    /*
-     * TODO 24 · 모집글 삭제
-     *
-     * 기능        모집자 본인인지 확인한 뒤 지움
-     * 활용메소드  StudyService.getWithWriter()   제공됨
-     *             StudyPost.isWrittenBy()        엔티티 · 제공됨
-     *             StudyPostRepository.delete()   제공됨
-     * 반환형태    없음
-     * 동작결과    EP-05 · 204 · 남의 글은 403 FORBIDDEN
-     */
-        throw new UnsupportedOperationException("TODO 24");
+        StudyPost post = getWithWriter(id);
+
+        if(!post.isWrittenBy(memberId)){
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        studyPostRepository.delete(post);
     }
 
     /**
