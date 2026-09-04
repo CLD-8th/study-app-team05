@@ -37,6 +37,7 @@ public class StudyService {
     private final ApplicationRepository applicationRepository;
     private final MemberService memberService;
 
+
     @Transactional
     public StudyDetailResponse create(String title, String content, int capacity,
                                       LocalDate deadline, Long memberId) {
