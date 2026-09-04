@@ -72,17 +72,10 @@ public class StudyService {
     }
 
     public StudyDetailResponse findById(Long id) {
-    /*
-     * TODO 22 · 모집글 상세 조회
-     *
-     * 기능        대상을 찾고 수락 인원을 세어 함께 담음
-     * 활용메소드  StudyService.getWithWriter()   제공됨
-     *             StudyService.countAccepted()   같은 클래스 · 제공됨
-     *             StudyDetailResponse.of()       제공됨
-     * 반환형태    StudyDetailResponse
-     * 동작결과    EP-02 · 200 과 상세 · 없는 번호는 404 NOT_FOUND
-     */
-        throw new UnsupportedOperationException("TODO 22");
+        StudyPost post = getWithWriter(id);
+        long acceptedCount = countAccepted(id);
+
+        return StudyDetailResponse.of(post, acceptedCount);
     }
 
     /**
