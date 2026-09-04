@@ -51,20 +51,35 @@ public class StudyController {
      * 동작결과    EP-01 · GET /api/studies?page=0&size=10 이 쪽 형태로 응답
      */
 
-    /*
-     * TODO 26 · 모집글 주소 다섯
-     *
-     * 기능        상세 · 등록 · 수정 · 삭제 · 마감 주소를 만듦
-     *             작성자를 본문으로 받지 않고 @AuthenticationPrincipal 로 받음
-     *             등록은 201 과 Location 머리 · 삭제는 204
-     * 활용메소드  StudyService.findById()   TODO 22 · 같은 담당
-     *             StudyService.create()     TODO 21 · 같은 담당
-     *             StudyService.update()     TODO 23 · 같은 담당
-     *             StudyService.delete()     TODO 24 · 같은 담당
-     *             StudyService.close()      TODO 25 · 같은 담당
-     *             ResponseEntity.created()  Location 머리를 붙임
-     *             URI.create()              주소 문자열을 만듦
-     * 반환형태    StudyDetailResponse · 삭제만 없음
-     * 동작결과    EP-02 ~ EP-06 · 마감은 PATCH /api/studies/{id}/close
-     */
+    @GetMapping("/{id}")
+    public StudyDetailResponse findOne(@PathVariable Long id) {
+        return studyService.findById(id);
+    }
+
+    @PostMapping
+    public ResponseEntity<StudyDetailResponse> create(@Valid @RequestBody StudyRequest request,
+                                                      @AuthenticationPrincipal Long memberId) {
+        StudyDetailResponse created = studyService.create(
+                request.title(), request.content(), request.capacity(), request.deadline(), memberId);
+
+        return ResponseEntity.created(URI.create("/api/studies/" + created.id())).body(created);
+    }
+
+    @PutMapping("/{id}")
+    public StudyDetailResponse update(@PathVariable Long id, @Valid @RequestBody StudyRequest request,
+                                      @AuthenticationPrincipal Long memberId) {
+        return studyService.update(id, request.title(), request.content(),
+                request.capacity(), request.deadline(), memberId);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal Long memberId) {
+        studyService.delete(id, memberId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/close")
+    public StudyDetailResponse close(@PathVariable Long id, @AuthenticationPrincipal Long memberId) {
+        return studyService.close(id, memberId);
+    }
 }
