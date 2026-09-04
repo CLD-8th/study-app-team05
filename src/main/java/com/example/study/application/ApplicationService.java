@@ -29,7 +29,6 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final StudyService studyService;
     private final MemberService memberService;
-    private final StudyPost studyPost;
 
     /**
      * 신청.
@@ -178,8 +177,11 @@ public class ApplicationService {
      * 동작결과    EP-10 · 상태가 ACCEPTED · 정원이 차면 400 CAPACITY_EXCEEDED
      *             마지막 자리를 채우면 모집글 상태가 CLOSED
      */
+
         // 처리 가능한 신청인지 확인
         Application application = processable(applicationId, memberId);
+        // StudyPost 불러오기
+        StudyPost studyPost = application.getStudyPost();
         // 모집글 ID 불러오기
         Long studyPostId = application.getStudyPost().getId();
         // 현재 허가된 사람을 셈
