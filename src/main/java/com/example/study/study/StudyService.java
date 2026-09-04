@@ -90,23 +90,20 @@ public class StudyService {
     @Transactional
     public StudyDetailResponse update(Long id, String title, String content, int capacity,
                                       LocalDate deadline, Long memberId) {
-    /*
-     * TODO 23 · 모집글 수정
-     *
-     * 기능        모집자 본인인지 → 모집 중인지 → 정원이 수락 인원 이상인지 순서로 판단
-     *             마감된 글을 수정하면 정원과 상태가 어긋남
-     *             정원을 수락 인원보다 줄이면 인원이 정원을 넘는 상태가 됨
-     * 활용메소드  StudyService.getWithWriter()   제공됨
-     *             StudyService.countAccepted()   같은 클래스 · 제공됨
-     *             StudyPost.isWrittenBy()        엔티티 · 제공됨
-     *             StudyPost.isRecruiting()       엔티티 · 제공됨
-     *             StudyPost.update()             엔티티 · 제공됨
-     *             BusinessException              공통 · 제공됨
-     * 반환형태    StudyDetailResponse
-     * 동작결과    EP-04 · 남의 글 403 FORBIDDEN · 마감된 글 400 STUDY_CLOSED
-     *             정원 축소 400 CAPACITY_BELOW_ACCEPTED
-     */
-        throw new UnsupportedOperationException("TODO 23");
+        StudyPost post = getWithWriter(id);
+
+        if(!post.isWrittenBy(memberId)){
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        if(!post.isRecruiting()){
+            throw new BusinessException(ErrorCode.STUDY_CLOSED);
+        }
+        long acceptedCount = countAccepted(id);
+        if(capacity < acceptedCount){
+            throw new BusinessException(ErrorCode.CAPACITY_BELOW_ACCEPTED);
+        }
+        post.update(title, content, capacity, deadline);
+        return StudyDetailResponse.of(post, acceptedCount);
     }
 
     @Transactional
