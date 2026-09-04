@@ -123,19 +123,18 @@ public class StudyService {
      */
     @Transactional
     public StudyDetailResponse close(Long id, Long memberId) {
-    /*
-     * TODO 25 · 모집 마감
-     *
-     * 기능        모집자 본인인지 → 모집 중인지 확인한 뒤 상태를 마감으로 바꿈
-     *             대기 상태의 신청은 그대로 둠 · 모집자가 개별로 처리함
-     * 활용메소드  StudyService.getWithWriter()   제공됨
-     *             StudyPost.isWrittenBy()        엔티티 · 제공됨
-     *             StudyPost.isRecruiting()       엔티티 · 제공됨
-     *             StudyPost.close()              엔티티 · 제공됨
-     * 반환형태    StudyDetailResponse
-     * 동작결과    EP-06 · 상태가 CLOSED · 이미 마감이면 400 STUDY_CLOSED
-     */
-        throw new UnsupportedOperationException("TODO 25");
+        StudyPost post = getWithWriter(id);
+
+        if(!post.isWrittenBy(memberId)){
+            throw new BusinessException(ErrorCode.FORBIDDEN,"모집자만 마감 가능");
+        }
+        if(!post.isRecruiting()){
+            throw new BusinessException(ErrorCode.STUDY_CLOSED,"이미 마감");
+        }
+
+        post.close();
+        long acceptedCount = countAccepted(id);
+        return StudyDetailResponse.of(post,acceptedCount);
     }
 
     public List<StudyListResponse> findMine(Long memberId) {
