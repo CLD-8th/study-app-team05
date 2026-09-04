@@ -97,16 +97,22 @@ http://localhost:8090
 
 **HTML 은 아무도 고치지 않음.** 요소 id 가 어긋나면 다른 담당의 구획을 덮어씀.
 
+## 팀 판단
+| 항목                     | 결정      |
+|--------------------------|-----------|
+| 거절된 신청의 재신청     | 가능      |
+| 한 모집글에 후기 여러 번 | 불가능    |
+| 취소한 신청의 기록       | 하지 않음 |
+
 ## 담당별 파일
 
-| 담당 | 번호 | 파일 |
-| --- | --- | --- |
-| 1 | 11 ~ 17 | `StudyService` · `StudyController` · `list.js` · `form.js` |
-| 2 | 21 ~ 28 | `StudyPostRepository` · `StudyService` · `StudyController` · `study-detail.js` |
-| 3 | 31 ~ 35 | `ApplicationRepository` · `ApplicationService` · `ApplicationController` · `study-apply.js` |
-| 4 | 41 ~ 48 | `ApplicationRepository` · `ApplicationService` · `ApplicationController` · `study-application.js` |
-| 5 | 51 ~ 58 | `ReviewRepository` · `ReviewService` · `ReviewController` · `study-review.js` |
-| 6 | 61 ~ 68 | `StudyPostRepository` · `ApplicationRepository` · `StudyService` · `ApplicationService` · `MemberController` · `mypage.js` |
+| 담당 | 번호             | 파일                                                                                                                                                                                                       |
+| --- |------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | 11 ~ 17, 66 ~ 68 | `StudyService` · `StudyController` · `list.js` · `form.js` · `mypage.js`                                                                                                                                                 |
+| 2 | 21 ~ 28          | `StudyPostRepository` · `StudyService` · `StudyController` · `study-detail.js`                                                                                                                             |
+| 3 | 31 ~ 35, 61 ~ 65 | `ApplicationRepository` · `ApplicationService` · `ApplicationController` · `study-apply.js` · `StudyPostRepository` · `ApplicationRepository` · `StudyService` · `ApplicationService` · `MemberController` |
+| 4 | 41 ~ 48          | `ApplicationRepository` · `ApplicationService` · `ApplicationController` · `study-application.js`                                                                                                          |
+| 5 | 51 ~ 58          | `ReviewRepository` · `ReviewService` · `ReviewController` · `study-review.js`                                                                                                                              |
 
 **같은 파일을 둘이 쓰는 경우가 있음.** 서로 다른 메서드이므로 자기 번호만 건드림.
 
