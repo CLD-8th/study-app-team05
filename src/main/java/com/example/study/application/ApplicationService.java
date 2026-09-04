@@ -104,7 +104,7 @@ public class ApplicationService {
      * 반환형태    없음
      * 동작결과    EP-08 · 204 · 남의 신청 403 · 처리된 건 400 ALREADY_PROCESSED
      */
-        Application application = getWdithStuyPost(applicationId);
+        Application application = getWithStudyPost(applicationId);
 
         if (!application.isAppliedBy(memberId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
