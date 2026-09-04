@@ -120,7 +120,20 @@ public class ApplicationService {
          * 반환형태    List<ApplicationResponse>
          * 동작결과    EP-09 · 모집자는 200 · 남이면 403 FORBIDDEN
          */
-        throw new UnsupportedOperationException("TODO 42");
+        StudyPost study = studyService.getWithWriter(studyPostId);
+
+        if (!study.isWrittenBy(memberId)) {
+            throw new BusinessException(
+                    ErrorCode.FORBIDDEN,
+                    "모집자만 신청 목록을 조회할 수 있습니다."
+            );
+        }
+
+        return applicationRepository
+                .findByStudyPostIdOrderByCreatedAtAsc(studyPostId)
+                .stream()
+                .map(ApplicationResponse::from)
+                .toList();
     }
 
     public List<ApplicationResponse> findMine(Long memberId) {
