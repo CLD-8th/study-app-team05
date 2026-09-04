@@ -36,20 +36,19 @@ public class StudyController {
 
     private final StudyService studyService;
 
-    /*
-     * TODO 12 · 모집글 목록 주소
-     *
-     * 기능        GET /api/studies 를 받음
-     *             page · size · keyword · status 를 질의 값으로 받으며
-     *             기본값은 page 0 · size 10 · 정렬은 식별자 내림차순
-     *             status 는 문자로 오므로 StudyStatus 로 바꿔 넘김
-     * 활용메소드  StudyService.findAll()   TODO 11 · 같은 담당
-     *             PageResponse.of()        공통 · 제공됨
-     *             PageRequest.of()         쪽 요청을 만듦
-     *             Sort.by()                정렬을 지정
-     * 반환형태    PageResponse<StudyListResponse> · TODO.md 응답 형태 참고
-     * 동작결과    EP-01 · GET /api/studies?page=0&size=10 이 쪽 형태로 응답
-     */
+    @GetMapping
+    public PageResponse<StudyListResponse> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status
+    ) {
+
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        StudyStatus studyStatus = status == null ? null : StudyStatus.valueOf(status);
+
+        return PageResponse.of(studyService.findAll(keyword, studyStatus, pageable), data -> data);
+    }
 
     @GetMapping("/{id}")
     public StudyDetailResponse findOne(@PathVariable Long id) {
