@@ -29,6 +29,7 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final StudyService studyService;
     private final MemberService memberService;
+    private final StudyPost studyPost;
 
     /**
      * 신청.
@@ -181,7 +182,22 @@ public class ApplicationService {
      * 반환형태    Application
      * 동작결과    남의 글 403 · 처리된 건 400 ALREADY_PROCESSED
      */
-        throw new UnsupportedOperationException("TODO 45");
+        Application application = getWithStudyPost(applicationId);
+
+        if(!application.getStudyPost().isWrittenBy(memberId)) {
+            throw new BusinessException(
+                    ErrorCode.FORBIDDEN,
+                    "모집자만 신청 목록을 조회할 수 있습니다."
+            );
+        }
+        if(!application.isPending()) {
+            throw new BusinessException(
+                    ErrorCode.ALREADY_PROCESSED,
+                    "이미 처리가 완료된 신청입니다."
+            );
+        }
+
+        return application;
     }
 
     private Application getWithStudyPost(Long id) {
