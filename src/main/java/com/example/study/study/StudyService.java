@@ -40,18 +40,11 @@ public class StudyService {
     @Transactional
     public StudyDetailResponse create(String title, String content, int capacity,
                                       LocalDate deadline, Long memberId) {
-    /*
-     * TODO 21 · 모집글 등록
-     *
-     * 기능        토큰에서 온 식별자로 모집자를 찾아 새 모집글을 저장함
-     *             갓 만든 글이므로 수락 인원은 0
-     * 활용메소드  MemberService.getMember()   제공됨
-     *             StudyPostRepository.save()  제공됨
-     *             StudyDetailResponse.of()    제공됨
-     * 반환형태    StudyDetailResponse · TODO.md 응답 형태 참고
-     * 동작결과    EP-03 · 201 과 Location 머리 · 상태는 RECRUITING
-     */
-        throw new UnsupportedOperationException("TODO 21");
+        Member writer = memberService.getMember(memberId);
+        StudyPost saved = studyPostRepository.save(
+                new StudyPost(title, content, capacity, deadline, writer));
+
+        return StudyDetailResponse.of(saved, 0);
     }
 
     /**
