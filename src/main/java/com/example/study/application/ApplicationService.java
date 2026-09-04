@@ -57,7 +57,30 @@ public class ApplicationService {
      *             마감 400 STUDY_CLOSED · 마감일 경과 400 DEADLINE_PASSED
      *             중복 400 DUPLICATE_APPLICATION
      */
-        throw new UnsupportedOperationException("TODO 31");
+        StudyPost studyPost = studyService.getWithWriter(studyPostId); // 대상 확인
+
+        if (studyPost.isWrittenBy(memberId)) {
+            throw new BusinessException(ErrorCode.SELF_APPLICATION);
+        } //자기 모집글
+
+        if (!studyPost.isRecruiting()) {
+            throw new BusinessException(ErrorCode.STUDY_CLOSED);
+        } //상태
+
+        if (studyPost.isDeadlinePassed()) {
+            throw new BusinessException(ErrorCode.DEADLINE_PASSED);
+        } //마감일
+
+        boolean duplicated = applicationRepository.existsByStudyPostIdAndApplicantIdAndStatusIn(
+                studyPostId, memberId, List.of(ApplicationStatus.PENDING, ApplicationStatus.ACCEPTED));
+
+        if (duplicated) {
+            throw new BusinessException(ErrorCode.DUPLICATE_APPLICATION);
+        } //중복 확인
+
+        Member applicant = memberService.getMember(memberId);
+        Application application = new Application(studyPost, applicant, message);
+        return ApplicationResponse.from(applicationRepository.save(application));
     }
 
     /**
