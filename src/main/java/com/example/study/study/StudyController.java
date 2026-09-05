@@ -44,7 +44,7 @@ public class StudyController {
             @RequestParam(required = false) String status
     ) {
 
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         StudyStatus studyStatus = status == null ? null : StudyStatus.valueOf(status);
 
         return PageResponse.of(studyService.findAll(keyword, studyStatus, pageable), data -> data);
