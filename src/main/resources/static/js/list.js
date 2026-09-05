@@ -5,54 +5,105 @@
  */
 
 let listPage = 0;
+const listSize = 10;
 
 function renderList(data) {
-    /*
-     * TODO 13 · 목록 표시
-     *
-     * 기능        건수를 표시하고 목록을 그림
-     *             한 건도 없으면 빈 화면 문구를 두고 쪽 이동도 비움
-     *             마감된 항목은 흐리게 표시함
-     * 활용메소드  badge() · shortDate() · escapeHtml()   common.js · 제공됨
-     *             renderPager()                          같은 파일 · TODO 14
-     * 받는자료    PageResponse<StudyListResponse> · TODO.md 응답 형태 참고
-     *             content 안에 목록이 들어 있음
-     * 그릴위치    SC-01 · #total 과 #list
-     *             조각은 parts.html 의 "목록 항목"
-     * 동작결과    제목을 누르면 /study.html?id= 로 이동
-     */
+    // 리스트 DOM 할당
+    const list = document.getElementById('list');
+    if (!list) return;
+    // 목록에 표시할 데이터 List
+    const items = data.content;
+    // 건수 표시
+    document.getElementById('total').textContent = `${data.totalElements}건`;
+    // 쪽 이동 표시
+    renderPager(data);
+    // 한 건도 없는 경우
+    if (items.length === 0) {
+        // 빈 화면 문구 표시
+        list.innerHTML = '<div class="empty">등록된 모집글이 없습니다</div>';
+        return;
+    }
+    // 목록 표시
+    list.innerHTML = items.map(item => `
+        <div class="${item.status === 'CLOSED' ? 'item closed' : 'item'}">
+            <div>
+                <div class="item-title"><a href="/study.html?id=${item.id}">${escapeHtml(item.title)}</a></div>
+                <div class="item-meta">
+                    <span>${escapeHtml(item.writerNickname)}</span>
+                    <span>${item.acceptedCount} / ${item.capacity}명</span>
+                </div>
+            </div>
+            <div class="item-meta">
+                ${badge(item.status)}
+                <span>${shortDate(item.createdAt)}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
 function renderPager(data) {
-    /*
-     * TODO 14 · 쪽 이동 표시
-     *
-     * 기능        전체 쪽 수만큼 단추를 만들고 현재 쪽에 current 를 붙임
-     *             단추를 누르면 listPage 를 바꾸고 다시 조회함
-     * 활용메소드  loadList()   같은 파일 · TODO 15
-     *             document.createElement()   요소를 만듦
-     * 받는자료    PageResponse · page 와 totalPages 를 씀
-     * 그릴위치    SC-01 · #pager
-     *             조각은 parts.html 의 "쪽 이동"
-     * 동작결과    쪽 단추를 누르면 그 쪽이 조회됨
-     */
+    // 쪽 표시 DOM 할당
+    const area = document.getElementById('pager');
+    if (!area) return;
+    // 모집글이 한 건도 없거나 페이지가 한 개인 경우 쪽 표시 X
+    if (!data.totalPages || data.totalPages <= 1) {
+        area.innerHTML = '';
+        return;
+    }
+    // 전체 쪽 수만큼 버튼 생성
+    const buttons = [];
+    for (let i = 0; i < data.totalPages; i++) {
+        buttons.push(
+            `<button class="${i === data.page ? 'current' : ''}" onclick="moveTo(${i})">${i + 1}</button>`
+        );
+    }
+    area.innerHTML = buttons.join('');
 }
 
 async function loadList() {
-    /*
-     * TODO 15 · 목록 조회
-     *
-     * 기능        검색어와 상태가 비어 있으면 질의 값에서 뺌
-     *             실패하면 안내를 보이고 목록과 쪽 이동을 비움
-     * 활용메소드  api.get()            api.js · 제공됨
-     *             renderList()         같은 파일 · TODO 13
-     *             URLSearchParams()    질의 문자열을 만듦
-     *             GET /api/studies     TODO 12 · 같은 담당
-     * 받는자료    PageResponse<StudyListResponse>
-     * 그릴위치    SC-01 · #load-error 에 실패 안내
-     *             조각은 parts.html 의 "실패 안내 · 다시 시도 포함"
-     * 동작결과    검색어를 넣으면 제목에 포함된 것만 나옴
-     */
+    // 검색어 추출
+    const keyword = document.getElementById('keyword').value.trim();
+    // 선택된 상태 추출
+    const status = document.getElementById('status').value;
+    // 실패 안내 문구 DOM 할당
+    const errorMessage = document.getElementById('load-error');
+    // 리스트 DOM 할당
+    const list = document.getElementById('list');
+    // 쪽 표시 DOM 할당
+    const pager = document.getElementById('pager');
+    // 조회 조건 생성 - 검색어와 상태가 비어 있으면 뺌
+    const params = {};
+    params.page = listPage;
+    params.size = listSize;
+    if (keyword) {
+        params.keyword = keyword;
+    }
+    if (status) {
+        params.status = status;
+    }
+    // 조건과 함께 조회 요청
+    try {
+        // 쿼리스트링 생성
+        const query = Object.keys(params).length ? '?' + new URLSearchParams(params).toString() : '';
+        // 응답 저장
+        const data = await api.get('/api/studies' + query);
+        // 목록 표시
+        renderList(data);
+        // 실패 안내 문구 숨김
+        errorMessage.classList.add('hidden');
+    } catch (e) {
+        // 요청 실패 시 실패 안내 문구 표시
+        errorMessage.classList.remove('hidden');
+        // 요청 실패 시 목록과 쪽 표시를 숨김
+        list.innerHTML = '';
+        pager.innerHTML = '';
+    }
+}
+
+// listPage를 변경하고 새로운 페이지를 로드하는 메서드
+function moveTo(page) {
+    listPage = page;
+    loadList();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
