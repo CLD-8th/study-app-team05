@@ -6,13 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,6 +18,7 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class ApplicationController {
 
     private final ApplicationService applicationService;
@@ -52,4 +47,34 @@ public class ApplicationController {
      * 반환형태    List<ApplicationResponse> · ApplicationResponse
      * 동작결과    EP-09 · EP-10 · EP-11
      */
+
+    @GetMapping("/studies/{studyId}/applications")
+    public ResponseEntity<List<ApplicationResponse>> findByStudy(
+            @PathVariable Long studyId,
+            @AuthenticationPrincipal Long memberId
+    ) {
+        List<ApplicationResponse> responses = applicationService.findByStudy(studyId, memberId);
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/applications/{id}/accept")
+    public ResponseEntity<ApplicationResponse> accept(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long memberId
+    ) {
+        ApplicationResponse response = applicationService.accept(id, memberId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/applications/{id}/reject")
+    public ResponseEntity<ApplicationResponse> reject(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long memberId
+    ) {
+        ApplicationResponse response = applicationService.reject(id, memberId);
+
+        return ResponseEntity.ok(response);
+    }
 }
