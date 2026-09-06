@@ -5,49 +5,88 @@
  */
 
 async function loadProfile() {
-    /*
-     * TODO 66 · 내 정보 표시
-     *
-     * 기능        이메일 · 별명 · 가입일을 그림
-     *             가입일은 앞 열 글자만 씀
-     * 활용메소드  api.get() · escapeHtml()   제공됨
-     *             GET /api/members/me        TODO 65 · 같은 담당
-     * 받는자료    MemberResponse · TODO.md 응답 형태 참고
-     * 그릴위치    SC-04 · #profile
-     *             조각은 parts.html 의 "마이페이지 내 정보"
-     * 동작결과    EP-15 · 토큰이 없으면 로그인 화면으로 보내짐
-     */
+    try {
+        // 내 정보 요청
+        const data = await api.get('/api/members/me');
+        // 내 정보 DOM 할당
+        const profile = document.getElementById('profile');
+        // 내 정보 표시
+        profile.innerHTML = `
+            <div>이메일 &nbsp; ${escapeHtml(data.email)}</div>
+            <div>별명 &nbsp; <b>${escapeHtml(data.nickname)}</b></div>
+            <div>가입일 &nbsp; ${formatDate(data.createdAt)}</div>
+        `;
+    } catch (e) {
+        // 토큰이 없는 경우 로그인 화면으로 이동
+        if (e.status === 401) {
+            location.href = '/login.html';
+        }
+    }
 }
 
 async function loadMyStudies() {
-    /*
-     * TODO 67 · 내 모집글 표시
-     *
-     * 기능        건수를 표시하고 목록을 그림
-     *             마감된 것은 흐리게 표시하고 인원을 함께 보임
-     *             한 건도 없으면 빈 화면 문구를 둠
-     * 활용메소드  api.get() · badge() · escapeHtml()   제공됨
-     *             GET /api/members/me/studies          TODO 65 · 같은 담당
-     * 받는자료    List<StudyListResponse>
-     * 그릴위치    SC-04 · #study-count 와 #my-studies
-     *             조각은 parts.html 의 "마이페이지 목록 항목"
-     * 동작결과    EP-16 · 제목을 누르면 상세로 이동
-     */
+    try {
+        // 내 모집글 목록 요청
+        const data = await api.get('/api/members/me/studies');
+        // 내 모집글 DOM 할당
+        const myStudies = document.getElementById('my-studies');
+        // 건수 표시
+        document.getElementById('study-count').textContent = `${data.length}건`;
+        // 한 건도 없는 경우
+        if (data.length === 0) {
+            // 빈 화면 문구 표시
+            myStudies.innerHTML = '<div class="empty">등록된 모집글이 없습니다</div>';
+        // 내 모집글이 있는 경우
+        } else {
+            // 내 모집글 목록 표시
+            myStudies.innerHTML = data.map(item => `
+                <div class="${item.status === 'CLOSED' ? 'item closed' : 'item'}">
+                    <div class="item-title"><a href="/study.html?id=${item.id}">${escapeHtml(item.title)}</a> ${badge(item.status)}</div>
+                    <span class="item-meta">${item.acceptedCount} / ${item.capacity}명</span>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error("내 모집글 불러오기 실패", e);
+    }
 }
 
 async function loadMyApplications() {
-    /*
-     * TODO 68 · 내 신청 표시
-     *
-     * 기능        건수를 표시하고 목록을 그림
-     *             모집글 제목과 상태 배지를 보임 · 취소 단추는 두지 않음
-     *             한 건도 없으면 빈 화면 문구를 둠
-     * 활용메소드  api.get() · badge() · shortDate()      제공됨
-     *             GET /api/members/me/applications       TODO 65 · 같은 담당
-     * 받는자료    List<ApplicationResponse> · studyPostTitle 로 제목을 표시
-     * 그릴위치    SC-04 · #application-count 와 #my-applications
-     * 동작결과    EP-17 · 취소는 상세 화면에서만 함
-     */
+    try {
+        // 내 신청 목록 요청
+        const data = await api.get('/api/members/me/applications');
+        // 내 신청 DOM 할당
+        const myApplications = document.getElementById('my-applications');
+        // 건수 표시
+        document.getElementById('application-count').textContent = `${data.length}건`;
+        // 한 건도 없는 경우
+        if (data.length === 0) {
+            // 빈 화면 문구 표시
+            myApplications.innerHTML = '<div class="empty">신청 내역이 없습니다</div>';
+        // 내 신청이 있는 경우
+        } else {
+            // 내 신청 목록 표시
+            myApplications.innerHTML = data.map(item => `
+                <div class="item">
+                    <div>
+                        <div class="item-title"><a href="/study.html?id=${item.studyPostId}">${escapeHtml(item.studyPostTitle)}</a> ${badge(item.status)}</div>
+                        <div class="item-meta"><span>${escapeHtml(item.message)}</span></div>
+                    </div>
+                    <span class="item-meta">${shortDate(item.createdAt)}</span>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error("내 신청 불러오기 실패", e);
+    }
+}
+
+// 가입 시점에서 날짜 정보만 분리하는 메서드
+function formatDate(value) {
+    if (!value) {
+        return '-';
+    }
+    return value.substring(0, 10);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
