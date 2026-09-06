@@ -223,7 +223,12 @@ public class ApplicationService {
      * 반환형태    ApplicationResponse
      * 동작결과    EP-11 · 상태가 REJECTED · 처리된 건은 400 ALREADY_PROCESSED
      */
-        throw new UnsupportedOperationException("TODO 44");
+        // TODO45에서 이미 에러 사항에 대한 처리를 하기때문에 추가 Exception 처리 없이 거절처리만 진행
+       Application application = processable(applicationId, memberId);
+
+       application.reject();
+
+       return ApplicationResponse.from(application);
     }
 
     private Application processable(Long applicationId, Long memberId) {
