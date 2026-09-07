@@ -41,11 +41,13 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
      */
 
     // 제공 · 담당 3 과 담당 4 가 함께 씀.
+    @EntityGraph(attributePaths = {"studyPost", "studyPost.writer"})
+    List<Application> findByApplicantIdOrderByIdDesc(Long applicantId);
+
     @EntityGraph(attributePaths = {"studyPost", "applicant"})
     Optional<Application> findWithStudyPostById(Long id);
 
     Optional<Application> findByStudyPostIdAndApplicantId(Long studyPostId, Long applicantId);
-
 
     long countByStudyPostIdAndStatus(Long studyPostId, ApplicationStatus status);
 
