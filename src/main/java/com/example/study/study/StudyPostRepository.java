@@ -25,18 +25,9 @@ public interface StudyPostRepository extends JpaRepository<StudyPost, Long> {
             """)
     Page<StudyPost> search(String keyword, StudyStatus status, Pageable pageable);
 
-    // 제공 · 다른 담당도 쓰는 규약이라 미리 만들어 둠.
-    //
-    // 모집자를 함께 가져옴. 지정하지 않으면 작성자 조회가 따로 나감.
     @EntityGraph(attributePaths = {"writer"})
     Optional<StudyPost> findWithWriterById(Long id);
 
-    /*
-     * TODO 61 · 내 모집글 규약
-     *
-     * 기능        모집자 식별자로 조회하며 최신순 정렬 · 모집자를 함께 가져옴
-     * 활용메소드  없음 · 이름 규약으로 직접 선언
-     * 반환형태    List<StudyPost>
-     * 동작결과    마이페이지에서 내 모집글이 최신순으로 나옴
-     */
+    @EntityGraph(attributePaths = {"writer"})
+    List<StudyPost> findByWriterIdOrderByIdDesc(Long writerId);
 }
