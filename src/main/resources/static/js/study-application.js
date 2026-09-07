@@ -21,6 +21,44 @@ StudyPage.register(async function renderApplications() {
      *             조각은 parts.html 의 "신청 목록"
      * 동작결과    남의 글에서는 구획이 보이지 않음 · 신청이 없으면 빈 화면 문구
      */
+    const study = StudyPage.study;
+    const panel = document.getElementById('application-panel');
+
+    if (!StudyPage.isOwner()) {
+        panel.classList.add('hidden');
+        return;
+    }
+    panel.classList.remove('hidden');
+
+    const list = await api.get('/api/studies/' + StudyPage.id + '/applications');
+    const full = study.acceptedCount >= study.capacity;
+
+    const rows = list.length === 0
+        ? '<div class="empty">아직 신청이 없습니다</div>'
+        : list.map(item =>
+            '<div class="item">' +
+            '  <div>' +
+            '    <div class="item-title">' + escapeHtml(item.applicantNickname) + ' ' +
+            badge(item.status) + '</div>' +
+            '    <div class="item-meta"><span>' + escapeHtml(item.message || '') + '</span></div>' +
+            '  </div>' +
+            (item.status === 'PENDING'
+                ? '<div class="actions">' +
+                '<button class="primary" data-accept="' + item.id + '">수락</button>' +
+                '<button data-reject="' + item.id + '">거절</button></div>'
+                : '<span class="item-meta">' + shortDate(item.createdAt) + '</span>') +
+            '</div>').join('');
+
+    panel.innerHTML =
+        '<div class="card-head"><div class="card-title">신청 목록</div>' +
+        '<span class="card-count">' + list.length + '건</span></div>' + rows +
+        (full ? '<div class="alert alert-error">정원이 찼습니다. 더 수락할 수 없습니다</div>' : '') +
+        '<div class="alert alert-error hidden" id="process-error"></div>';
+
+    panel.querySelectorAll('[data-accept]').forEach(button =>
+        button.addEventListener('click', () => processApplication(button.dataset.accept, 'accept')));
+    panel.querySelectorAll('[data-reject]').forEach(button =>
+        button.addEventListener('click', () => processApplication(button.dataset.reject, 'reject')));
 });
 
 async function processApplication(applicationId, action) {
@@ -40,4 +78,10 @@ async function processApplication(applicationId, action) {
      * 동작결과    마지막 자리를 수락하면 상세의 배지가 마감으로 바뀜
      *             정원이 찬 뒤 수락하면 400 CAPACITY_EXCEEDED
      */
+    try {
+        await api.patch('/api/applications/' + applicationId + '/' + action);
+        await StudyPage.reload();
+    } catch (error) {
+        showError(document.getElementById('process-error'), error);
+    }
 }
