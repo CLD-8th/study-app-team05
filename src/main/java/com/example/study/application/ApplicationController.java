@@ -35,6 +35,18 @@ public class ApplicationController {
      * 동작결과    EP-07 · EP-08
      */
 
+    @DeleteMapping("/api/applications/{id}")
+    public ResponseEntity<Void> cancel(@PathVariable Long id,
+                                       @AuthenticationPrincipal Long memberId) {
+        applicationService.cancel(id, memberId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/studies/{studyId}/applications")
+    public List<ApplicationResponse> findByStudy(@PathVariable Long studyId,
+                                                 @AuthenticationPrincipal Long memberId) {
+        return applicationService.findByStudy(studyId, memberId);
+    }
     /*
      * TODO 46 · 신청 처리 주소 셋
      *

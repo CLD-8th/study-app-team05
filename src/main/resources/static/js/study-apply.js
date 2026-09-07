@@ -4,7 +4,6 @@
  * StudyPage.study 와 StudyPage.myApplication 을 읽어 표시함.
  * 자료를 직접 조회하지 않음. 이미 읽어 둔 것을 씀.
  */
-
 StudyPage.register(async function renderApply() {
     /*
      * TODO 34 · 구획 표시 조건과 신청 전 화면
@@ -39,4 +38,55 @@ StudyPage.register(async function renderApply() {
      *             조각은 parts.html 의 "신청 후 · 대기" 와 "신청 후 · 수락됨"
      * 동작결과    대기 건은 취소 단추가 보이고 수락된 건은 보이지 않음
      */
+    const study = StudyPage.study;
+    const panel = document.getElementById('apply-panel');
+
+    if (!auth.loggedIn || StudyPage.isOwner() || study.status !== 'RECRUITING') {
+        panel.classList.add('hidden');
+        return;
+    }
+    panel.classList.remove('hidden');
+
+    const mine = StudyPage.myApplication;
+
+    if (mine) {
+        const cancelable = mine.status === 'PENDING';
+        panel.innerHTML =
+            '<div class="card-head"><div class="card-title">신청</div></div>' +
+            '<div class="item">' +
+            '  <div class="item-meta">' + badge(mine.status) +
+            '    <span>' + shortDate(mine.createdAt) + '에 신청함</span></div>' +
+            (cancelable ? '<button id="cancel-apply">신청 취소</button>' : '') +
+            '</div>' +
+            '<div class="alert alert-error hidden" id="apply-error"></div>';
+
+        if (cancelable) {
+            document.getElementById('cancel-apply').addEventListener('click', async () => {
+                if (!confirm('신청을 취소하시겠습니까?')) return;
+                try {
+                    await api.del('/api/applications/' + mine.id);
+                    await StudyPage.reload();
+                } catch (error) {
+                    showError(document.getElementById('apply-error'), error);
+                }
+            });
+        }
+        return;
+    }
+
+    panel.innerHTML =
+        '<div class="card-head"><div class="card-title">신청</div></div>' +
+        '<div class="field"><textarea id="message" placeholder="신청 메시지"></textarea></div>' +
+        '<div class="alert alert-error hidden" id="apply-error"></div>' +
+        '<div class="actions"><button class="primary" id="apply">신청하기</button></div>';
+
+    document.getElementById('apply').addEventListener('click', async () => {
+        try {
+            await api.post('/api/studies/' + StudyPage.id + '/applications',
+                { message: document.getElementById('message').value.trim() });
+            await StudyPage.reload();
+        } catch (error) {
+            showError(document.getElementById('apply-error'), error);
+        }
+    });
 });
