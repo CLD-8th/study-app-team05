@@ -21,15 +21,23 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    /*
-     * TODO 56 · 후기 주소 셋
-     *
-     * 기능        GET /api/studies/{studyId}/reviews 는 손님도 볼 수 있음
-     *             POST 는 201 · DELETE 는 204
-     * 활용메소드  ReviewService.findByStudy()   TODO 52 · 같은 담당
-     *             ReviewService.create()        TODO 53 · 같은 담당
-     *             ReviewService.delete()        TODO 54 · 같은 담당
-     * 반환형태    List<ReviewResponse> · ReviewResponse
-     * 동작결과    EP-12 · EP-13 · EP-14 · 목록은 토큰 없이 200
-     */
+    @GetMapping("/api/studies/{studyId}/reviews")
+    public List<ReviewResponse> findByStudy(@PathVariable Long studyId) {
+        return reviewService.findByStudy(studyId);
+    }
+
+    @PostMapping("/api/studies/{studyId}/reviews")
+    public ResponseEntity<ReviewResponse> create(@PathVariable Long studyId,
+                                                 @Valid @RequestBody ReviewRequest request,
+                                                 @AuthenticationPrincipal Long memberId) {
+        return ResponseEntity.status(201)
+                .body(reviewService.create(studyId, request.content(), request.rating(), memberId));
+    }
+
+    @DeleteMapping("/api/reviews/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @AuthenticationPrincipal Long memberId) {
+        reviewService.delete(id, memberId);
+        return ResponseEntity.noContent().build();
+    }
 }

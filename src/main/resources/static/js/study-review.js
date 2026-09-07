@@ -6,36 +6,66 @@
  */
 
 StudyPage.register(async function renderReviews() {
-    /*
-     * TODO 57 · 후기 목록과 입력란
-     *
-     * 기능        후기 목록을 조회해 그림 · 손님도 볼 수 있음
-     *             입력란은 로그인 · 마감 · 참여자 · 미작성을 모두 만족할 때만 둠
-     *             참여자는 모집자이거나 내 신청이 수락된 경우임
-     *             자기 후기에만 삭제 단추를 둠
-     * 활용메소드  StudyPage.isOwner() · StudyPage.myApplication   제공됨
-     *             auth.memberId                                  api.js · 제공됨
-     *             api.get() · dateTime() · escapeHtml()          제공됨
-     *             GET /api/studies/{id}/reviews                  TODO 56 · 같은 담당
-     * 받는자료    List<ReviewResponse> · writerId 로 내 후기를 가림
-     * 그릴위치    SC-02 · #review-panel
-     *             조각은 parts.html 의 "후기 입력" 과 "후기 항목"
-     * 동작결과    모집 중에는 입력란이 없음 · 신청하지 않은 사람도 목록은 보임
-     */
+    const study = StudyPage.study;
+    const panel = document.getElementById('review-panel');
+    panel.classList.remove('hidden');
 
-    /*
-     * TODO 58 · 후기 등록과 삭제
-     *
-     * 기능        평점과 내용을 보내고 성공하면 다시 그림
-     *             삭제는 확인을 받은 뒤 요청함
-     *             항목별 사유가 오면 입력란 아래에 표시함
-     * 활용메소드  api.post() · api.del()   api.js · 제공됨
-     *             StudyPage.reload()       제공됨
-     *             showFieldErrors() · showError()   common.js · 제공됨
-     *             POST · DELETE 후기 주소   TODO 56 · 같은 담당
-     * 받는자료    ReviewResponse · 실패는 ErrorResponse
-     * 그릴위치    SC-02 · #review-error · #write-review · data-review
-     * 동작결과    두 번째 작성은 400 DUPLICATE_REVIEW
-     *             남의 후기에는 삭제 단추가 없음
-     */
+    const list = await api.get('/api/studies/' + StudyPage.id + '/reviews');
+    const written = auth.loggedIn && list.some(item => item.writerId === auth.memberId);
+    const participant = StudyPage.isOwner() ||
+        (StudyPage.myApplication !== null && StudyPage.myApplication.status === 'ACCEPTED');
+
+    const writable = auth.loggedIn && study.status === 'CLOSED' && participant && !written;
+
+    const form = writable
+        ? '<div class="card" style="background:#fafbfc; margin-bottom:14px;">' +
+        '  <div class="field" style="display:flex; gap:10px; align-items:center;">' +
+        '    <label for="rating">평점</label>' +
+        '    <select id="rating" style="width:90px;">' +
+        '      <option>5</option><option>4</option><option>3</option>' +
+        '      <option>2</option><option>1</option></select>' +
+        '  </div>' +
+        '  <div class="field"><textarea id="review-content" placeholder="후기를 남겨 주세요"></textarea></div>' +
+        '  <div class="alert alert-error hidden" id="review-error"></div>' +
+        '  <div class="actions"><button class="primary" id="write-review">등록</button></div>' +
+        '</div>'
+        : '';
+
+    const rows = list.length === 0
+        ? '<div class="empty">아직 후기가 없습니다</div>'
+        : list.map(item =>
+            '<div class="item">' +
+            '  <div>' +
+            '    <div class="item-title">' + escapeHtml(item.writerNickname) +
+            '      <span style="color:#4f6ef0;">' + '★'.repeat(item.rating) + '</span></div>' +
+            '    <div class="item-meta"><span>' + escapeHtml(item.content) + '</span></div>' +
+            '  </div>' +
+            '  <div class="item-meta"><span>' + dateTime(item.createdAt) + '</span>' +
+            (auth.loggedIn && item.writerId === auth.memberId
+                ? '<button class="danger" data-review="' + item.id + '">삭제</button>' : '') +
+            '</div></div>').join('');
+
+    panel.innerHTML = '<div class="card-head"><div class="card-title">후기</div></div>' + form + rows;
+
+    if (writable) {
+        document.getElementById('write-review').addEventListener('click', async () => {
+            try {
+                await api.post('/api/studies/' + StudyPage.id + '/reviews', {
+                    content: document.getElementById('review-content').value.trim(),
+                    rating: Number(document.getElementById('rating').value)
+                });
+                await StudyPage.reload();
+            } catch (error) {
+                const box = document.getElementById('review-error');
+                if (!showFieldErrors(error, '')) showError(box, error);
+            }
+        });
+    }
+
+    panel.querySelectorAll('[data-review]').forEach(button =>
+        button.addEventListener('click', async () => {
+            if (!confirm('후기를 삭제하시겠습니까?')) return;
+            await api.del('/api/reviews/' + button.dataset.review);
+            await StudyPage.reload();
+        }));
 });
