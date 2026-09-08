@@ -18,7 +18,6 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
 public class ApplicationController {
 
     private final ApplicationService applicationService;
@@ -42,10 +41,12 @@ public class ApplicationController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/api/studies/{studyId}/applications")
-    public List<ApplicationResponse> findByStudy(@PathVariable Long studyId,
-                                                 @AuthenticationPrincipal Long memberId) {
-        return applicationService.findByStudy(studyId, memberId);
+    @PostMapping("/api/studies/{studyId}/applications")
+    public ResponseEntity<ApplicationResponse> apply(@PathVariable Long studyId,
+                                                     @Valid @RequestBody ApplicationRequest request,
+                                                     @AuthenticationPrincipal Long memberId) {
+        return ResponseEntity.status(201)
+                .body(applicationService.apply(studyId, request.message(), memberId));
     }
     /*
      * TODO 46 · 신청 처리 주소 셋
@@ -60,7 +61,7 @@ public class ApplicationController {
      * 동작결과    EP-09 · EP-10 · EP-11
      */
 
-    @GetMapping("/studies/{studyId}/applications")
+    @GetMapping("/api/studies/{studyId}/applications")
     public ResponseEntity<List<ApplicationResponse>> findByStudy(
             @PathVariable Long studyId,
             @AuthenticationPrincipal Long memberId
@@ -70,7 +71,7 @@ public class ApplicationController {
         return ResponseEntity.ok(responses);
     }
 
-    @PatchMapping("/applications/{id}/accept")
+    @PatchMapping("/api/applications/{id}/accept")
     public ResponseEntity<ApplicationResponse> accept(
             @PathVariable Long id,
             @AuthenticationPrincipal Long memberId
@@ -80,7 +81,7 @@ public class ApplicationController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/applications/{id}/reject")
+    @PatchMapping("/api/applications/{id}/reject")
     public ResponseEntity<ApplicationResponse> reject(
             @PathVariable Long id,
             @AuthenticationPrincipal Long memberId
